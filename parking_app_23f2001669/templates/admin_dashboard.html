@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Green Parking App - Admin Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body class="green-bg">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-success">
+        <div class="container">
+            <a class="navbar-brand" href="#">🌱 Green Parking Admin</a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="{{ url_for('logout') }}">Logout</a>
+            </div>
+        </div>
+    </nav>
+    
+    <div class="container mt-4">
+        <!-- Flash messages -->
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-success alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        
+        <div class="row">
+            <div class="col-md-12">
+                <h2 class="green-title">🛠️ Admin Dashboard</h2>
+                <p class="subtitle">Managing eco-friendly parking lots</p>
+            </div>
+        </div>
+        
+        <!-- Statistics Cards -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <div class="stat-icon">🚗</div>
+                    <div class="stat-number">{{ occupied_spots }}</div>
+                    <div class="stat-label">Occupied Spots</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <div class="stat-icon">🅿️</div>
+                    <div class="stat-number">{{ available_spots }}</div>
+                    <div class="stat-label">Available Spots</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <div class="stat-icon">🌍</div>
+                    <div class="stat-number">{{ "%.1f"|format(total_carbon_saved) }}</div>
+                    <div class="stat-label">kg CO2 Saved</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <div class="stat-icon">👥</div>
+                    <div class="stat-number">{{ users|length }}</div>
+                    <div class="stat-label">Registered Users</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Parking Lots Section -->
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between">
+                        <h5>🏢 Parking Lots Management</h5>
+                        <a href="{{ url_for('add_parking_lot') }}" class="btn btn-success">
+                            ➕ Add New Lot
+                        </a>
+                    </div>
+                    <div class="card-body">
+                        {% if lots %}
+                            <div class="table-responsive">
+                                <table class="table table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>Name</th>
+                                            <th>Address</th>
+                                            <th>Max Spots</th>
+                                            <th>Price (₹/hour)</th>
+                                            <th>Eco Rating</th>
+                                            <th>Green Features</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for lot in lots %}
+                                        <tr>
+                                            <td>{{ lot[0] }}</td>
+                                            <td>{{ lot[1] }}</td>
+                                            <td>{{ lot[2] }}</td>
+                                            <td>{{ lot[5] }}</td>
+                                            <td>₹{{ lot[4] }}</td>
+                                            <td>
+                                                {% for i in range(lot[6]) %}
+                                                    ⭐
+                                                {% endfor %}
+                                            </td>
+                                            <td>
+                                                {% if lot[7] %}☀️{% endif %}
+                                                {% if lot[8] %}🔋{% endif %}
+                                                {% if lot[9] %}♻️{% endif %}
+                                            </td>
+                                            <td>
+                                                <a href="{{ url_for('edit_parking_lot', lot_id=lot[0]) }}" 
+                                                   class="btn btn-sm btn-primary">Edit</a>
+                                                <a href="{{ url_for('delete_parking_lot', lot_id=lot[0]) }}" 
+                                                   class="btn btn-sm btn-danger"
+                                                   onclick="return confirm('Are you sure you want to delete this lot?')">Delete</a>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        {% else %}
+                            <div class="text-center py-4">
+                                <p>No parking lots created yet.</p>
+                                <a href="{{ url_for('add_parking_lot') }}" class="btn btn-success">
+                                    Create Your First Eco-Friendly Lot
+                                </a>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Users Section -->
+        <div class="row mt-4">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>👥 Registered Users</h5>
+                    </div>
+                    <div class="card-body">
+                        {% if users %}
+                            <div class="table-responsive">
+                                <table class="table table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>Username</th>
+                                            <th>Email</th>
+                                            <th>Green Points</th>
+                                            <th>Carbon Saved (kg)</th>
+                                            <th>Badges</th>
+                                            <th>Joined</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for user in users %}
+                                        <tr>
+                                            <td>{{ user[0] }}</td>
+                                            <td>{{ user[1] }}</td>
+                                            <td>{{ user[3] }}</td>
+                                            <td>
+                                                <span class="badge bg-success">{{ user[5] }} 🌱</span>
+                                            </td>
+                                            <td>{{ "%.2f"|format(user[4]) }}</td>
+                                            <td>
+                                                {% if user[6] %}
+                                                    {% for badge in user[6].split(',') %}
+                                                        {% if badge %}
+                                                            <span class="badge bg-primary">{{ badge }}</span>
+                                                        {% endif %}
+                                                    {% endfor %}
+                                                {% endif %}
+                                            </td>
+                                            <td>{{ user[7][:10] }}</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        {% else %}
+                            <div class="text-center py-4">
+                                <p>No users registered yet.</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

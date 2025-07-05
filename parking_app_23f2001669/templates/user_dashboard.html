@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Green Parking App - User Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body class="green-bg">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-success">
+        <div class="container">
+            <a class="navbar-brand" href="#">🌱 Green Parking</a>
+            <div class="navbar-nav ms-auto">
+                <span class="navbar-text me-3">
+                    Welcome, {{ session.username }}! 🌿 {{ user[5] }} points
+                </span>
+                <a class="nav-link" href="{{ url_for('logout') }}">Logout</a>
+            </div>
+        </div>
+    </nav>
+    
+    <div class="container mt-4">
+        <!-- Flash messages -->
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-success alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        
+        <div class="row">
+            <div class="col-md-12">
+                <h2 class="green-title">🚗 Your Green Parking Dashboard</h2>
+                <p class="subtitle">Park smart, live green!</p>
+            </div>
+        </div>
+        
+        <!-- User Stats -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <div class="stat-icon">🌱</div>
+                    <div class="stat-number">{{ user[5] }}</div>
+                    <div class="stat-label">Green Points</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <div class="stat-icon">🌍</div>
+                    <div class="stat-number">{{ "%.2f"|format(user[4]) }}</div>
+                    <div class="stat-label">kg CO2 Saved</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <div class="stat-icon">🏆</div>
+                    <div class="stat-number">{{ user[6].count(',') + 1 if user[6] else 0 }}</div>
+                    <div class="stat-label">Badges Earned</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-card">
+                    <div class="stat-icon">📅</div>
+                    <div class="stat-number">{{ history|length }}</div>
+                    <div class="stat-label">Total Parkings</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Eco Tip -->
+        <div class="row mb-4">
+            <div class="col-md-12">
+                <div class="eco-tip-card">
+                    <h6>💡 Today's Eco Tip</h6>
+                    <p>{{ eco_tip }}</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Badges -->
+        {% if user[6] %}
+        <div class="row mb-4">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>🏆 Your Badges</h5>
+                    </div>
+                    <div class="card-body">
+                        {% for badge in user[6].split(',') %}
+                            {% if badge %}
+                                <span class="badge bg-primary me-2 mb-2">{{ badge }}</span>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- Current Reservations -->
+        <div class="row mb-4">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>🚗 Current Parking</h5>
+                    </div>
+                    <div class="card-body">
+                        {% if current_reservations %}
+                            {% for reservation in current_reservations %}
+                            <div class="alert alert-info">
+                                <h6>📍 {{ reservation[11] }}</h6>
+                                <p><strong>Spot:</strong> #{{ reservation[12] }} ({{ reservation[13]|title }} spot)</p>
+                                <p><strong>Parked since:</strong> {{ reservation[3][:19] }}</p>
+                                <a href="{{ url_for('checkout', reservation_id=reservation[0]) }}" 
+                                   class="btn btn-warning">
+                                    🚪 Check Out & Earn Green Points
+                                </a>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="text-center py-4">
+                                <p>No current parking reservations.</p>
+                                <p>Book a spot below to start earning green points!</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Available Parking Lots -->
+        <div class="row mb-4">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>🏢 Available Parking Lots</h5>
+                    </div>
+                    <div class="card-body">
+                        {% if lots %}
+                            <div class="row">
+                                {% for lot in lots %}
+                                <div class="col-md-6 mb-3">
+                                    <div class="lot-card">
+                                        <h6>{{ lot[1] }}</h6>
+                                        <p><strong>📍 Address:</strong> {{ lot[2] }}</p>
+                                        <p><strong>💰 Price:</strong> ₹{{ lot[4] }}/hour</p>
+                                        <p><strong>🌟 Eco Rating:</strong> 
+                                            {% for i in range(lot[6]) %}⭐{% endfor %}
+                                        </p>
+                                        <p><strong>🌱 Green Features:</strong>
+                                            {% if lot[7] %}☀️ Solar{% endif %}
+                                            {% if lot[8] %}🔋 EV Charging{% endif %}
+                                            {% if lot[9] %}♻️ Recycling{% endif %}
+                                        </p>
+                                        <a href="{{ url_for('book_parking', lot_id=lot[0]) }}" 
+                                           class="btn btn-success">
+                                            🚗 Book Parking
+                                        </a>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <div class="text-center py-4">
+                                <p>No parking lots available at the moment.</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Parking History -->
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>📊 Recent Parking History</h5>
+                    </div>
+                    <div class="card-body">
+                        {% if history %}
+                            <div class="table-responsive">
+                                <table class="table table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>Parking Lot</th>
+                                            <th>Spot</th>
+                                            <th>Type</th>
+                                            <th>Duration</th>
+                                            <th>Cost</th>
+                                            <th>CO2 Saved</th>
+                                            <th>Points Earned</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for record in history %}
+                                        <tr>
+                                            <td>{{ record[11] }}</td>
+                                            <td>#{{ record[12] }}</td>
+                                            <td>{{ record[13]|title }}</td>
+                                            <td>
+                                                {% set duration = (record[4][:19] | strptime('%Y-%m-%d %H:%M:%S')) - (record[3][:19] | strptime('%Y-%m-%d %H:%M:%S')) %}
+                                                {{ duration.total_seconds() // 3600 }}h {{ (duration.total_seconds() % 3600) // 60 }}m
+                                            </td>
+                                            <td>₹{{ "%.2f"|format(record[5]) }}</td>
+                                            <td>{{ "%.2f"|format(record[6]) }}kg</td>
+                                            <td>{{ record[7] }} 🌱</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        {% else %}
+                            <div class="text-center py-4">
+                                <p>No parking history yet.</p>
+                                <p>Book your first parking spot to start building your green profile!</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
